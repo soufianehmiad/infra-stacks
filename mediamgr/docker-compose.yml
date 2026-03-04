@@ -1,0 +1,36 @@
+services:
+  mediamgr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mediamgr
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+    volumes:
+      - /media:/media
+      - /opt/mediamgr-data:/data
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      - MEDIA_ROOT=/media
+      - DATA_DIR=/data
+      - LIBVA_DRIVER_NAME=iHD
+      - CF_HOST=${CF_HOST}
+      - CF_USER=${CF_USER}
+      - CF_KEY=/run/secrets/cf_key
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      - CF_KEY_B64=${CF_KEY_B64}
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /run/secrets && printf '%s' \"$$CF_KEY_B64\" | base64 -d > /run/secrets/cf_key && chmod 600 /run/secrets/cf_key && exec python main.py"]
+    networks:
+      - media_network
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "MediaMgr"
+      unidash.port: "7474"
+
+networks:
+  media_network:
+    external: true
+    name: media-stack_media_network

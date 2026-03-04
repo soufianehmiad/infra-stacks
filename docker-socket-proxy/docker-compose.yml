@@ -1,0 +1,26 @@
+services:
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker_socket_proxy
+    restart: always
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "2376:2375"
+    environment:
+      - CONTAINERS=1
+      - SERVICES=1
+      - NETWORKS=1
+      - TASKS=1
+      - IMAGES=1
+      - INFO=1
+      - VOLUMES=0
+      - POST=0
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - EXEC=0
+      - LOG_LEVEL=info
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"

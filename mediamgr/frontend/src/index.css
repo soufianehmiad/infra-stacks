@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-base: #111113;
+  --bg-surface: #19191e;
+  --bg-elevated: #222228;
+  --border: #2c2c38;
+  --border-bright: #3c3c4c;
+  --text-primary: #dddde8;
+  --text-secondary: #8a8aa8;
+  --text-muted: #50506a;
+  --accent: #6aab84;
+  --accent-dim: rgba(106, 171, 132, 0.12);
+  --accent-bright: #82c49c;
+  --danger: #b86070;
+  --warn: #b09050;
+  --success: #5aac88;
+
+  /* Spacing scale — 4px base */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* Typography scale */
+  --fs-xs: 9px;     /* labels, badges, mono captions */
+  --fs-sm: 11px;    /* secondary text, table cells */
+  --fs-base: 13px;  /* primary body text */
+  --fs-md: 15px;    /* sub-headers */
+  --fs-lg: 17px;    /* section titles */
+  --fs-xl: 28px;    /* page titles (h1) */
+  --fs-hero: 60px;  /* hero metric */
+
+  /* Component sizes */
+  --btn-h: 28px;          /* standard button height */
+  --panel-pad: 16px;      /* panel inner padding */
+  --panel-head-pad: 10px 16px; /* panel header padding */
+  --row-pad: 10px 12px;   /* table row cell padding */
+  --page-pad: 32px 40px;  /* main content area padding */
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+/* File table row */
+.file-row {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s ease;
+}
+.file-row::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.1s ease;
+}
+.file-row:hover { background: rgba(106, 171, 132, 0.05); }
+.file-row:hover::before { background: var(--accent); }
+.file-row.selected { background: rgba(106, 171, 132, 0.08); }
+.file-row.selected::before { background: var(--accent); }
+
+input[type="checkbox"] { accent-color: var(--accent); }
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8aa8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px !important;
+}
+
+/* Progress bar */
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.progress-running {
+  background: var(--accent);
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+/* Pulse dot */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+
+/* Page fade in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeIn 0.25s ease forwards; }
+
+/* Sidebar */
+.sidebar-bg {
+  background: #0e0e12;
+  border-right: 1px solid var(--border);
+}
+
+/* ── Global alignment baseline fixes ────────────────────────────────────── */
+
+/* All page-level h1 headings: consistent size and reset margin */
+h1 {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* Panel / section label headers (9px mono caps) */
+.panel-label {
+  font-size: var(--fs-xs);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+/* MonoLabel equivalent: 9px JetBrains Mono */
+.mono-label {
+  font-size: var(--fs-xs);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}

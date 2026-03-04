@@ -1,0 +1,60 @@
+services:
+  app:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_app
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - GENERIC_TIMEZONE=${TZ}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${DB_NAME}
+      - DB_POSTGRESDB_USER=${DB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - n8n_network
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  db:
+    image: postgres:16-alpine
+    container_name: n8n_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - n8n_db_data:/var/lib/postgresql/data
+    networks:
+      - n8n_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+volumes:
+  n8n_data:
+    external: true
+    name: n8n_n8n
+  n8n_db_data:
+    external: true
+    name: n8n_n8n_db
+
+networks:
+  n8n_network:
+    driver: bridge

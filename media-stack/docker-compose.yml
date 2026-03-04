@@ -1,0 +1,284 @@
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VERSION=docker
+    volumes:
+      - ${APPDATA_ROOT}/plex:/config
+      - ${MEDIA_ROOT}:/media:ro
+      - /dev/shm:/transcode
+    devices:
+      - /dev/dri/card0:/dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/tautulli:/config
+    ports:
+      - "8181:8181"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Tautulli"
+      unidash.type: "tautulli"
+      unidash.port: "8181"
+      unidash.path: "/tautulli"
+
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/sabnzbd:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "6789:8080"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "SABnzbd"
+      unidash.type: "sabnzbd"
+      unidash.port: "8080"
+      unidash.path: "/sab"
+
+  qbittorrent:
+    image: binhex/arch-qbittorrentvpn:latest
+    container_name: qbittorrent
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VPN_ENABLED=yes
+      - VPN_PROV=custom
+      - VPN_CLIENT=openvpn
+      - LAN_NETWORK=10.99.0.0/24,172.18.0.0/16
+      - NAME_SERVERS=1.1.1.1,8.8.8.8
+      - DEBUG=false
+      - WEBUI_PORT=8080
+    volumes:
+      - ${APPDATA_ROOT}/qbittorrent:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    networks:
+      - media_network
+    restart: unless-stopped
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "qBittorrent"
+      unidash.type: "qbittorrent"
+      unidash.port: "8080"
+      unidash.path: "/qbit"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/prowlarr:/config
+    ports:
+      - "9696:9696"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Prowlarr"
+      unidash.type: "prowlarr"
+      unidash.port: "9696"
+      unidash.path: "/prowlarr"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/sonarr:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "8989:8989"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Sonarr"
+      unidash.type: "sonarr"
+      unidash.port: "8989"
+      unidash.path: "/sonarr"
+
+  sonarr-anime:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr-anime
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/sonarr-anime:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "8990:8989"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Sonarr (Anime)"
+      unidash.type: "sonarr"
+      unidash.port: "8989"
+      unidash.path: "/sonarr-anime"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/radarr:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "7878:7878"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Radarr"
+      unidash.type: "radarr"
+      unidash.port: "7878"
+      unidash.path: "/radarr"
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/bazarr:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "6767:6767"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "Bazarr"
+      unidash.type: "bazarr"
+      unidash.port: "6767"
+      unidash.path: "/bazarr"
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_ROOT}/lidarr:/config
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "8686:8686"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - TZ=${TZ}
+    ports:
+      - "8191:8191"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      unidash.enable: "true"
+      unidash.name: "FlareSolverr"
+      unidash.type: "flaresolverr"
+      unidash.port: "8191"
+      unidash.path: "/flaresolverr"
+
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:latest
+    container_name: tdarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - nodeName=MediaServerNode
+    volumes:
+      - ${APPDATA_ROOT}/tdarr/server:/app/server
+      - ${APPDATA_ROOT}/tdarr/configs:/app/configs
+      - ${APPDATA_ROOT}/tdarr/logs:/app/logs
+      - ${APPDATA_ROOT}/tdarr/cache:/temp
+      - ${MEDIA_ROOT}:/media
+    ports:
+      - "8265:8265"
+      - "8266:8266"
+    networks:
+      - media_network
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+networks:
+  media_network:
+    driver: bridge
+    name: media-stack_media_network

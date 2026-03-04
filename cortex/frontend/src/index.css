@@ -1,0 +1,77 @@
+/* cortex/frontend/src/index.css */
+@import "tailwindcss";
+
+@theme {
+  --color-void: #070710;
+  --color-surface: #0d0d1a;
+  --color-elevated: #131325;
+  --color-border: rgba(255,255,255,0.06);
+  --color-accent: #818cf8;
+  --color-accent-dim: rgba(129,140,248,0.12);
+  --color-text-primary: #e2e8f0;
+  --color-text-muted: #475569;
+  --color-up: #22c55e;
+  --color-down: #ef4444;
+  --color-warn: #f59e0b;
+
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Scanline texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.008) 2px,
+    rgba(255,255,255,0.008) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  will-change: auto;
+}
+
+body {
+  background: var(--color-void);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+/* Tile */
+.tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Status dot */
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-up    { background: var(--color-up);   box-shadow: 0 0 6px var(--color-up); }
+.dot-down  { background: var(--color-down); }
+.dot-warn  { background: var(--color-warn); }
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+  50%       { opacity: 0.7; box-shadow: 0 0 10px currentColor; }
+}
+.dot-up { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+/* Mono data */
+.mono { font-family: var(--font-mono); }
+
+/* Quick access card hover glow */
+.qa-card:hover {
+  box-shadow: 0 0 0 1px var(--color-accent), 0 4px 20px rgba(129,140,248,0.15);
+}
+.qa-card:hover .qa-icon svg {
+  filter: drop-shadow(0 0 5px rgba(129,140,248,0.6));
+}

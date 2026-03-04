@@ -1,0 +1,93 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cortex-frontend
+    ports:
+      - "9999:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - cortex
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: cortex-api
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - CF_HOST=${CF_HOST}
+      - CF_USER=${CF_USER}
+      - CF_KEY=/run/secrets/cf_key
+      - CF_KEY_B64=${CF_KEY_B64}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+      - DOCKER_HOSTS=${DOCKER_HOSTS}
+      - PUBLIC_BASE=${PUBLIC_BASE}
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /run/secrets && printf '%s' \"$$CF_KEY_B64\" | base64 -d > /run/secrets/cf_key && chmod 600 /run/secrets/cf_key && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - cortex
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+  encoder:
+    build:
+      context: ./encoder
+      dockerfile: Dockerfile
+    container_name: cortex-encoder
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - LIBVA_DRIVER_NAME=iHD
+    volumes:
+      - /media:/media:ro
+      - cortex-data:/data
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    restart: unless-stopped
+    networks:
+      - cortex
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/encoder/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+volumes:
+  cortex-data:
+    external: true
+    name: cortex_cortex-data
+
+networks:
+  cortex:
+    driver: bridge
