@@ -1,8 +1,6 @@
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: cortex-frontend:latest
     container_name: cortex-frontend
     ports:
       - "9999:80"
@@ -15,9 +13,7 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
 
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    image: cortex-api:latest
     container_name: cortex-api
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST}
@@ -38,6 +34,9 @@ services:
       - MEDIA_ROOT=${MEDIA_ROOT}
       - DOCKER_HOSTS=${DOCKER_HOSTS}
       - PUBLIC_BASE=${PUBLIC_BASE}
+      - PVE_HOST=${PVE_HOST}
+      - PVE_TOKEN_ID=${PVE_TOKEN_ID}
+      - PVE_TOKEN_SECRET=${PVE_TOKEN_SECRET}
     entrypoint: ["/bin/sh", "-c", "mkdir -p /run/secrets && printf '%s' \"$$CF_KEY_B64\" | base64 -d > /run/secrets/cf_key && chmod 600 /run/secrets/cf_key && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -53,9 +52,7 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
 
   encoder:
-    build:
-      context: ./encoder
-      dockerfile: Dockerfile
+    image: cortex-encoder:latest
     container_name: cortex-encoder
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST}
