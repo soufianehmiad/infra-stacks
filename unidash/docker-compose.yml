@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: unidash-backend:latest
     container_name: unidash-backend
     restart: unless-stopped
     environment:
@@ -39,9 +37,7 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: unidash-frontend:latest
     container_name: unidash-frontend
     restart: unless-stopped
     ports:

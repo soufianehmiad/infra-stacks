@@ -1,8 +1,6 @@
 services:
   mediamgr:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mediamgr:latest
     container_name: mediamgr
     restart: unless-stopped
     ports:
