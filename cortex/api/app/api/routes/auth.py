@@ -38,9 +38,9 @@ async def login(req: LoginRequest, response: Response, db: AsyncSession = Depend
     user.failed_attempts = 0
     await db.commit()
 
-    response.set_cookie("access_token", access_token, httponly=True, secure=True, samesite="lax", max_age=900)
-    response.set_cookie("refresh_token", refresh_token, httponly=True, secure=True, samesite="lax", max_age=60 * 60 * 24 * 7)
-    response.set_cookie("unidash_auth", "1", secure=True, samesite="lax", max_age=60 * 60 * 24 * 7)
+    response.set_cookie("access_token", access_token, httponly=True, secure=False, samesite="lax", max_age=900)
+    response.set_cookie("refresh_token", refresh_token, httponly=True, secure=False, samesite="lax", max_age=60 * 60 * 24 * 7)
+    response.set_cookie("unidash_auth", "1", secure=False, samesite="lax", max_age=60 * 60 * 24 * 7)
     return {"ok": True}
 
 
@@ -63,8 +63,8 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
     new_refresh = create_refresh_token(user_id)
     await redis.setex(f"session:{user_id}:refresh", 60 * 60 * 24 * 7, new_refresh)
 
-    response.set_cookie("access_token", new_access, httponly=True, secure=True, samesite="lax", max_age=900)
-    response.set_cookie("refresh_token", new_refresh, httponly=True, secure=True, samesite="lax", max_age=60 * 60 * 24 * 7)
+    response.set_cookie("access_token", new_access, httponly=True, secure=False, samesite="lax", max_age=900)
+    response.set_cookie("refresh_token", new_refresh, httponly=True, secure=False, samesite="lax", max_age=60 * 60 * 24 * 7)
     return {"ok": True}
 
 
@@ -73,7 +73,7 @@ async def logout(response: Response, access_token: str | None = Cookie(default=N
     if access_token:
         redis = get_redis()
         await redis.setex(f"blocklist:{access_token}", 900, "1")
-    response.delete_cookie("access_token", httponly=True, secure=True, samesite="lax")
-    response.delete_cookie("refresh_token", httponly=True, secure=True, samesite="lax")
-    response.delete_cookie("unidash_auth", secure=True, samesite="lax")
+    response.delete_cookie("access_token", httponly=True, secure=False, samesite="lax")
+    response.delete_cookie("refresh_token", httponly=True, secure=False, samesite="lax")
+    response.delete_cookie("unidash_auth", secure=False, samesite="lax")
     return {"ok": True}

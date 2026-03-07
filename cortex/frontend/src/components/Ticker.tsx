@@ -8,10 +8,11 @@ export function Ticker() {
   useEffect(() => { connect() }, [connect])
 
   return (
-    <div className="flex items-center gap-2 mono text-[10px] text-[var(--color-text-muted)]
+    <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]
                     overflow-hidden max-w-xs">
-      <span className="shrink-0 text-[var(--color-accent)]">●</span>
-      <span className="truncate">{latest ?? 'connected · waiting for events'}</span>
+      <span className="shrink-0 text-[var(--color-accent)]"
+            style={{ textShadow: '0 0 6px rgba(34, 197, 94, 0.5)' }}>●</span>
+      <span className="truncate">{latest ?? 'connected'}</span>
     </div>
   )
 }

@@ -10,6 +10,7 @@ from app import encoder, storage
 async def lifespan(app: FastAPI):
     asyncio.create_task(encoder.process_queue())
     asyncio.create_task(storage.snapshot_scheduler())
+    asyncio.create_task(storage.take_snapshot())  # initial snapshot on startup
     yield
 
 

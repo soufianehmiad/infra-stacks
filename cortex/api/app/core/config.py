@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     cf_host: str = "10.99.0.50"
     cf_user: str = "root"
     cf_key: str = "/run/secrets/cf_key"
+    pve_host: str = "10.99.0.254"
+    pve_token_id: str = ""
+    pve_token_secret: str = ""
 
     @property
     def database_url(self) -> str:

@@ -7,27 +7,35 @@ function fmt(bytes: number) {
 }
 
 export function StorageTile({ storage }: { storage: StorageSnapshot[] | null }) {
-  if (!storage) return <div className="p-4 mono text-[10px] text-[var(--color-text-muted)]">loading…</div>
+  if (!storage) return <div className="p-5 text-xs text-[var(--color-text-muted)]">loading...</div>
   const total = storage[0]?.total_bytes ?? 0
   const used = storage.reduce((s, r) => s + r.used_bytes, 0)
   const pct = total > 0 ? (used / total * 100) : 0
   return (
-    <div className="p-4 h-full flex flex-col gap-2">
-      <div className="mono text-[11px] text-[var(--color-text-muted)] tracking-widest">STORAGE</div>
-      <div className="mono text-xl text-[var(--color-text-primary)]">{fmt(used)} <span className="text-sm text-[var(--color-text-muted)]">/ {fmt(total)}</span></div>
-      <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
-        <div className="h-full bg-[var(--color-accent)] transition-all" style={{ width: `${pct}%` }} />
+    <div className="p-5 h-full flex flex-col gap-3">
+      <div className="mono text-xs text-[var(--color-accent)] tracking-[0.2em]">MEDIA STORAGE</div>
+      <div className="flex items-baseline gap-2">
+        <span className="mono text-2xl text-[var(--color-text-primary)] font-semibold"
+              style={{ textShadow: '0 0 8px rgba(34, 197, 94, 0.3)' }}>{fmt(used)}</span>
+        <span className="text-sm text-[var(--color-text-muted)]">/ {fmt(total)}</span>
+      </div>
+      <div className="h-2 bg-[var(--color-void)] rounded-full overflow-hidden border border-[var(--color-border)]">
+        <div className="h-full bg-[var(--color-accent)] transition-all rounded-full"
+             style={{ width: `${pct}%`, boxShadow: '0 0 8px rgba(34, 197, 94, 0.4)' }} />
       </div>
       <div className="flex-1 space-y-1.5 overflow-hidden">
         {storage.map(s => (
           <div key={s.folder} className="flex items-center justify-between gap-2">
-            <span className="mono text-[10px] text-[var(--color-text-muted)]">{s.folder}</span>
-            <span className="mono text-[10px] text-[var(--color-text-primary)]">{fmt(s.used_bytes)}</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{s.folder}</span>
+            <span className="mono text-xs text-[var(--color-text-primary)]">{fmt(s.used_bytes)}</span>
           </div>
         ))}
       </div>
       {storage[0]?.saved_bytes > 0 && (
-        <div className="mono text-[10px] text-[var(--color-up)]">↓ {fmt(storage[0].saved_bytes)} saved</div>
+        <div className="text-xs text-[var(--color-up)]"
+             style={{ textShadow: '0 0 4px rgba(34, 197, 94, 0.3)' }}>
+          ↓ {fmt(storage[0].saved_bytes)} saved
+        </div>
       )}
     </div>
   )

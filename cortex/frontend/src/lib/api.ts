@@ -43,6 +43,11 @@ export const api = {
     getConfig:     (name: string) => api.get(`/tunnels/${name}/config`),
     getLogs:       (name: string, lines?: number) => api.get<string[]>(`/tunnels/${name}/logs?lines=${lines ?? 150}`),
     updateIngress: (name: string, rules: unknown[]) => api.put(`/tunnels/${name}/ingress`, { rules }),
+    expose:     (tunnel: string, hostname: string, internal_url: string) =>
+                  api.post(`/tunnels/${tunnel}/expose`, { hostname, internal_url }),
+    unexpose:   (tunnel: string, hostname: string) =>
+                  api.delete(`/tunnels/${tunnel}/expose?hostname=${encodeURIComponent(hostname)}`),
+    allIngress: () => api.get<Record<string, { tunnel: string; service: string }>>('/tunnels/ingress/all'),
   },
   media: {
     list: (params?: Record<string, unknown>) =>
@@ -58,12 +63,18 @@ export const api = {
     current: () => api.get<StorageSnapshot[]>('/storage/'),
     history: (days = 30) => api.get<StorageSnapshot[]>(`/storage/history?days=${days}`),
   },
+  proxmox: {
+    nodes:   () => api.get<PveNode>('/proxmox/nodes'),
+    storage: () => api.get<PveStorage[]>('/proxmox/storage'),
+    lxc:     () => api.get<PveLxc[]>('/proxmox/lxc'),
+  },
 }
 
 // Types
 export interface Service {
   container_id: string; name: string; type: string; status: string
   port: number | null; path: string | null; url: string | null; icon: string | null
+  category: string; host: string; public_url: string | null
 }
 export interface Tunnel {
   name: string; service: string; active: string; sub: string; running: boolean; description: string
@@ -81,4 +92,14 @@ export interface JobRecord {
 export interface StorageSnapshot {
   id: number; folder: string; used_bytes: number; total_bytes: number
   saved_bytes: number; taken_at: string
+}
+export interface PveNode {
+  node: string; cpu_pct: number; mem_used: number; mem_total: number; uptime: number
+}
+export interface PveStorage {
+  storage: string; type: string; used: number; total: number; avail: number; pct: number
+}
+export interface PveLxc {
+  vmid: number; name: string; status: string; mem_used: number; mem_total: number
+  disk_used: number; disk_total: number; uptime: number; cpu: number
 }

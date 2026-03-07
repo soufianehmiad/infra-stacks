@@ -1,25 +1,39 @@
-/* cortex/frontend/src/index.css */
+/* cortex/frontend/src/index.css — COCKPIT theme */
 @import "tailwindcss";
 
 @theme {
-  --color-void: #070710;
-  --color-surface: #0d0d1a;
-  --color-elevated: #131325;
-  --color-border: rgba(255,255,255,0.06);
-  --color-accent: #818cf8;
-  --color-accent-dim: rgba(129,140,248,0.12);
-  --color-text-primary: #e2e8f0;
-  --color-text-muted: #475569;
-  --color-up: #22c55e;
-  --color-down: #ef4444;
-  --color-warn: #f59e0b;
+  /* Cockpit — retro-futuristic command center */
+  --color-void:         #0a0e14;
+  --color-surface:      #111820;
+  --color-elevated:     #1a2332;
+  --color-border:       rgba(34, 197, 94, 0.15);
+  --color-accent:       #22c55e;
+  --color-accent-dim:   rgba(34, 197, 94, 0.08);
+  --color-text-primary: #d4e0d4;
+  --color-text-muted:   #5a7a6a;
+  --color-up:           #22c55e;
+  --color-down:         #ef4444;
+  --color-warn:         #f59e0b;
 
-  --font-ui: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui:   'JetBrains Mono', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
 }
 
-/* Scanline texture */
+/* Cockpit grid overlay */
 body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Scanline effect */
+body::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -27,12 +41,11 @@ body::before {
     0deg,
     transparent,
     transparent 2px,
-    rgba(255,255,255,0.008) 2px,
-    rgba(255,255,255,0.008) 4px
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
   );
   pointer-events: none;
-  z-index: 9999;
-  will-change: auto;
+  z-index: 9998;
 }
 
 body {
@@ -50,28 +63,53 @@ body {
 
 /* Status dot */
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-up    { background: var(--color-up);   box-shadow: 0 0 6px var(--color-up); }
-.dot-down  { background: var(--color-down); }
-.dot-warn  { background: var(--color-warn); }
+.dot-up    { background: var(--color-up);   box-shadow: 0 0 6px var(--color-up), 0 0 12px rgba(34, 197, 94, 0.3); }
+.dot-down  { background: var(--color-down); box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
+.dot-warn  { background: var(--color-warn); box-shadow: 0 0 4px rgba(245, 158, 11, 0.3); }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
-  50%       { opacity: 0.7; box-shadow: 0 0 10px currentColor; }
+  0%, 100% { box-shadow: 0 0 6px var(--color-up), 0 0 12px rgba(34, 197, 94, 0.3); }
+  50%      { box-shadow: 0 0 10px var(--color-up), 0 0 20px rgba(34, 197, 94, 0.5); }
 }
 .dot-up { animation: pulse-glow 2.5s ease-in-out infinite; }
 
-/* Mono data */
+/* Mono */
 .mono { font-family: var(--font-mono); }
 
-/* Quick access card hover glow */
-.qa-card:hover {
-  box-shadow: 0 0 0 1px var(--color-accent), 0 4px 20px rgba(129,140,248,0.15);
+/* Glow card hover */
+.glow-card {
+  transition: all 0.2s ease;
 }
-.qa-card:hover .qa-icon svg {
-  filter: drop-shadow(0 0 5px rgba(129,140,248,0.6));
+.glow-card:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.1), inset 0 0 16px rgba(34, 197, 94, 0.03);
+}
+
+/* Fluid typography */
+:root {
+  font-size: clamp(14px, 0.85vw + 9px, 19px);
+}
+
+/* Mobile: touch targets */
+@media (max-width: 640px) {
+  nav button, nav a {
+    min-height: 44px;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34, 197, 94, 0.4); }
+
+/* Focus visible */
+*:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
 }

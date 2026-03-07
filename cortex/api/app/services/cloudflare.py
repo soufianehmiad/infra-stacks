@@ -178,6 +178,56 @@ async def update_ingress(name: str, rules: list[dict]) -> dict:
         return {"ok": False, "error": str(e)}
 
 
+async def expose_service(tunnel_name: str, hostname: str, internal_url: str) -> dict:
+    """Add an ingress rule for hostname → internal_url, keep catch-all last, restart tunnel."""
+    cfg = await get_config(tunnel_name)
+    if cfg is None:
+        return {"ok": False, "error": "Tunnel config not found"}
+
+    rules: list[dict] = cfg.get("ingress", [])
+
+    # Remove existing rule for same hostname (idempotent)
+    rules = [r for r in rules if r.get("hostname") != hostname]
+
+    # Separate catch-all (no hostname) from normal rules
+    catch_all = [r for r in rules if not r.get("hostname")]
+    normal = [r for r in rules if r.get("hostname")]
+
+    # Ensure a catch-all exists (cloudflared requires it as the last rule)
+    if not catch_all:
+        catch_all = [{"service": "http_status:404"}]
+
+    # Insert new rule before catch-all
+    normal.append({"hostname": hostname, "service": internal_url})
+    new_rules = normal + catch_all
+
+    result = await update_ingress(tunnel_name, new_rules)
+    if not result["ok"]:
+        return result
+
+    return await control_tunnel(tunnel_name, "restart")
+
+
+async def unexpose_service(tunnel_name: str, hostname: str) -> dict:
+    """Remove an ingress rule by hostname and restart tunnel."""
+    cfg = await get_config(tunnel_name)
+    if cfg is None:
+        return {"ok": False, "error": "Tunnel config not found"}
+
+    rules: list[dict] = cfg.get("ingress", [])
+    new_rules = [r for r in rules if r.get("hostname") != hostname]
+
+    # Guard: if nothing was removed, hostname didn't exist
+    if len(new_rules) == len(rules):
+        return {"ok": False, "error": f"No ingress rule found for hostname: {hostname}"}
+
+    result = await update_ingress(tunnel_name, new_rules)
+    if not result["ok"]:
+        return result
+
+    return await control_tunnel(tunnel_name, "restart")
+
+
 async def stream_logs(websocket, name: str) -> None:
     """Tail -f logs and forward each line to the WebSocket."""
     try:

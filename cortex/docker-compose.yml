@@ -1,6 +1,7 @@
+# cortex/docker-compose.yml
 services:
   frontend:
-    image: cortex-frontend:latest
+    build: ./frontend
     container_name: cortex-frontend
     ports:
       - "9999:80"
@@ -10,80 +11,76 @@ services:
     networks:
       - cortex
     labels:
-      com.centurylinklabs.watchtower.enable: "false"
+      cortex.enable: "true"
+      cortex.name: "cortex-frontend"
+      cortex.type: "web"
+      cortex.port: "9999"
+      cortex.url: "https://cortex.cirrolink.com"
 
   api:
-    image: cortex-api:latest
+    build: ./api
     container_name: cortex-api
+    env_file: .env
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - SECRET_KEY=${SECRET_KEY}
-      - ADMIN_USERNAME=${ADMIN_USERNAME}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - CF_HOST=${CF_HOST}
-      - CF_USER=${CF_USER}
-      - CF_KEY=/run/secrets/cf_key
-      - CF_KEY_B64=${CF_KEY_B64}
-      - MEDIA_ROOT=${MEDIA_ROOT}
-      - DOCKER_HOSTS=${DOCKER_HOSTS}
-      - PUBLIC_BASE=${PUBLIC_BASE}
-      - PVE_HOST=${PVE_HOST}
+      - PVE_HOST=${PVE_HOST:-10.99.0.254}
       - PVE_TOKEN_ID=${PVE_TOKEN_ID}
       - PVE_TOKEN_SECRET=${PVE_TOKEN_SECRET}
-    entrypoint: ["/bin/sh", "-c", "mkdir -p /run/secrets && printf '%s' \"$$CF_KEY_B64\" | base64 -d > /run/secrets/cf_key && chmod 600 /run/secrets/cf_key && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./secrets/cf_key:/run/secrets/cf_key:ro
     restart: unless-stopped
     networks:
       - cortex
+    labels:
+      cortex.enable: "true"
+      cortex.name: "cortex-api"
+      cortex.type: "api"
+      cortex.port: "8000"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
-    labels:
-      com.centurylinklabs.watchtower.enable: "false"
 
   encoder:
-    image: cortex-encoder:latest
+    build: ./encoder
     container_name: cortex-encoder
-    environment:
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - LIBVA_DRIVER_NAME=iHD
+    env_file: .env
     volumes:
       - /media:/media:ro
       - cortex-data:/data
     devices:
       - /dev/dri/renderD128:/dev/dri/renderD128
+    environment:
+      - LIBVA_DRIVER_NAME=iHD
     restart: unless-stopped
     networks:
       - cortex
+    labels:
+      cortex.enable: "true"
+      cortex.name: "cortex-encoder"
+      cortex.type: "encoder"
+      cortex.port: "8001"
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/encoder/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
-    labels:
-      com.centurylinklabs.watchtower.enable: "false"
+
+  portainer_agent:
+    image: portainer/agent:latest
+    container_name: portainer_agent
+    ports:
+      - "9001:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    restart: unless-stopped
+    networks:
+      - cortex
 
 volumes:
   cortex-data:
-    external: true
-    name: cortex_cortex-data
 
 networks:
   cortex:

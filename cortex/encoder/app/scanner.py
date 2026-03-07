@@ -2,11 +2,14 @@
 # Adapted from mediamgr/backend/scanner.py — replaced aiosqlite with SQLAlchemy async
 import asyncio
 import json
+import logging
 import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -121,7 +124,7 @@ async def _upsert_file(info: dict):
             duration=info["duration_s"],
             audio=info["audio_codec"],
             suggested_action=info["suggested_action"],
-            scanned_at=datetime.now(timezone.utc),
+            scanned_at=datetime.utcnow(),
             flagged=False,
         ).on_conflict_do_update(
             index_elements=["path"],
@@ -134,7 +137,7 @@ async def _upsert_file(info: dict):
                 "duration": info["duration_s"],
                 "audio": info["audio_codec"],
                 "suggested_action": info["suggested_action"],
-                "scanned_at": datetime.now(timezone.utc),
+                "scanned_at": datetime.utcnow(),
             }
         )
         await db.execute(stmt)
@@ -180,8 +183,8 @@ async def run_scan():
                         "suggested_action": suggested,
                     })
                     scanned_paths.add(path)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error("Failed to process %s: %s", path, e, exc_info=True)
             _scan_state["scanned"] += 1
             if _scan_state["scanned"] % 10 == 0:
                 await asyncio.sleep(0)
