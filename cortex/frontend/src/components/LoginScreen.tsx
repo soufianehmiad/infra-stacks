@@ -112,11 +112,12 @@ export function LoginScreen() {
             // authenticate
           </div>
 
-          <form onSubmit={submit} className="flex flex-col gap-3" autoComplete="on">
+          <form onSubmit={submit} action="/api/auth/login" method="POST" className="flex flex-col gap-3">
             <div>
-              <label className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">USER</label>
+              <label htmlFor="username" className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">USER</label>
               <input
                 ref={inputRef}
+                id="username"
                 type="text"
                 name="username"
                 autoComplete="username"
@@ -129,8 +130,9 @@ export function LoginScreen() {
               />
             </div>
             <div>
-              <label className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">PASS</label>
+              <label htmlFor="password" className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">PASS</label>
               <input
+                id="password"
                 type="password"
                 name="password"
                 autoComplete="current-password"
