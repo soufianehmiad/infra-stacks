@@ -1,6 +1,6 @@
 // cortex/frontend/src/sections/Media.tsx — single table + right drawer
 import { useEffect, useState, useCallback } from 'react'
-import { ScanLine, Search, Filter, X } from 'lucide-react'
+import { ScanLine, Search, X } from 'lucide-react'
 import { api, type MediaFileRecord } from '../lib/api'
 import { Drawer } from '../components/Drawer'
 
