@@ -23,6 +23,7 @@ export function Tunnels() {
   const [activeTunnel, setActiveTunnel] = useState<string | null>(null)
   const [subTab, setSubTab] = useState<'ingress' | 'logs'>('ingress')
   const [editing, setEditing] = useState<EditState | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -54,16 +55,26 @@ export function Tunnels() {
   const doExpose = async (tunnel: string) => {
     if (!editing || !editing.hostname.trim() || !editing.service.trim()) return
     setBusy('expose')
+    setErrorMsg(null)
     try {
       await api.tunnels.expose(tunnel, editing.hostname.trim(), editing.service.trim())
       setEditing(null)
       await load()
+    } catch (e: any) {
+      setErrorMsg(`Failed: ${e.message ?? e}`)
     } finally { setBusy(null) }
   }
 
   const doUnexpose = async (tunnel: string, hostname: string) => {
+    if (!confirm(`Remove ingress rule for ${hostname}?`)) return
     setBusy(`del:${hostname}`)
-    try { await api.tunnels.unexpose(tunnel, hostname); await load() } finally { setBusy(null) }
+    setErrorMsg(null)
+    try {
+      await api.tunnels.unexpose(tunnel, hostname)
+      await load()
+    } catch (e: any) {
+      setErrorMsg(`Failed to remove ${hostname}: ${e.message ?? e}`)
+    } finally { setBusy(null) }
   }
 
   const current = tunnels.find(t => t.name === activeTunnel)
@@ -138,6 +149,14 @@ export function Tunnels() {
               ))}
             </div>
           </div>
+
+          {/* Error bar */}
+          {errorMsg && (
+            <div className="px-6 py-2 bg-[rgba(239,68,68,0.08)] border-b border-[var(--color-down)]/30 flex items-center justify-between">
+              <span className="mono text-[11px] text-[var(--color-down)]">{errorMsg}</span>
+              <button onClick={() => setErrorMsg(null)} className="mono text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">dismiss</button>
+            </div>
+          )}
 
           {/* Ingress table */}
           {subTab === 'ingress' && (
