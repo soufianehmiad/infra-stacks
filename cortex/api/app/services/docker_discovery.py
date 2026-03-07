@@ -99,10 +99,10 @@ def _scan_host_sync(base_url: str) -> list[dict]:
         category = labels.get(f"{LABEL_PREFIX}.category") or (known.get("category") if known else "other")
 
         if not url:
-            if host_ip and port:
-                url = f"http://{host_ip}:{port}"
-            elif PUBLIC_BASE and path is not None:
+            if PUBLIC_BASE and path is not None:
                 url = f"{PUBLIC_BASE}{path}" if path else None
+            elif host_ip and port:
+                url = f"http://{host_ip}:{port}"
 
         services.append({
             "container_id": c.id[:12],
