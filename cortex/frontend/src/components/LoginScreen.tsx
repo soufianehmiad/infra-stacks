@@ -35,6 +35,8 @@ export function LoginScreen() {
           <input
             ref={inputRef}
             type="text"
+            name="username"
+            autoComplete="username"
             placeholder="username"
             value={username}
             onChange={e => setUsername(e.target.value)}
@@ -44,6 +46,8 @@ export function LoginScreen() {
           />
           <input
             type="password"
+            name="password"
+            autoComplete="current-password"
             placeholder="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
