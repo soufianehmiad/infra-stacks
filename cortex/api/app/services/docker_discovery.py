@@ -75,12 +75,12 @@ def _scan_host(base_url: str) -> list[dict]:
         url = labels.get(f"{LABEL_PREFIX}.url")
         icon = known["icon"] if known else None
 
-        # Build URL: prefer public proxy path, fall back to direct internal URL
+        # Build URL: prefer direct IP for remote hosts, fall back to public proxy path
         if not url:
-            if PUBLIC_BASE and path:
-                url = f"{PUBLIC_BASE}{path}"
-            elif host_ip and port:
+            if host_ip and port:
                 url = f"http://{host_ip}:{port}"
+            elif PUBLIC_BASE and path:
+                url = f"{PUBLIC_BASE}{path}"
 
         services.append({
             "container_id": c.id[:12],
