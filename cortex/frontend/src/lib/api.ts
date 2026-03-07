@@ -63,6 +63,9 @@ export const api = {
     current: () => api.get<StorageSnapshot[]>('/storage/'),
     history: (days = 30) => api.get<StorageSnapshot[]>(`/storage/history?days=${days}`),
   },
+  kubernetes: {
+    apps: () => api.get<K8sApp[]>('/kubernetes/apps'),
+  },
   proxmox: {
     nodes:   () => api.get<PveNode>('/proxmox/nodes'),
     storage: () => api.get<PveStorage[]>('/proxmox/storage'),
@@ -92,6 +95,11 @@ export interface JobRecord {
 export interface StorageSnapshot {
   id: number; folder: string; used_bytes: number; total_bytes: number
   saved_bytes: number; taken_at: string
+}
+export interface K8sApp {
+  project: string; namespace: string; environment: string
+  hostname: string; url: string; service: string; port: number | null
+  pods_ready: number; pods_total: number; healthy: boolean
 }
 export interface PveNode {
   node: string; cpu_pct: number; mem_used: number; mem_total: number; uptime: number

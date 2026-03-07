@@ -1,12 +1,13 @@
-// cortex/frontend/src/sections/Media.tsx — single table + right drawer
-import { useEffect, useState, useCallback } from 'react'
-import { ScanLine, Search, X } from 'lucide-react'
+// cortex/frontend/src/sections/Media.tsx
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { ScanLine, Search, X, ChevronRight, Folder } from 'lucide-react'
 import { api, type MediaFileRecord } from '../lib/api'
 import { Drawer } from '../components/Drawer'
 
 const FOLDERS = ['all', 'movies', 'series', 'anime', 'downloads'] as const
 const CODECS = ['all', 'hevc', 'h264', 'av1', 'mpeg4'] as const
 const ACTIONS = ['all', 'reencode', 'remux', 'downscale', 'skip'] as const
+const GROUPABLE = new Set(['series', 'anime'])
 
 function fmt(bytes: number) {
   if (bytes > 1e9) return `${(bytes / 1e9).toFixed(1)}G`
@@ -27,6 +28,23 @@ const actionColors: Record<string, string> = {
   downscale: 'text-[var(--color-warn)]',
 }
 
+/** Extract series/show folder name from path like /media/series/Show Name (2020)/Season 01/file.mkv */
+function getSeriesFolder(path: string): string | null {
+  // /media/{folder}/{SeriesName}/...
+  const parts = path.split('/')
+  // parts: ['', 'media', 'series', 'Show Name (2020)', 'Season 01', 'file.mkv']
+  if (parts.length >= 4) return parts[3]
+  return null
+}
+
+interface FolderGroup {
+  name: string
+  files: MediaFileRecord[]
+  totalSize: number
+  codecs: Set<string>
+  actions: Set<string>
+}
+
 export function Media() {
   const [folder, setFolder] = useState<string>('all')
   const [files, setFiles] = useState<MediaFileRecord[]>([])
@@ -39,9 +57,10 @@ export function Media() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [drawerFile, setDrawerFile] = useState<MediaFileRecord | null>(null)
   const [busy, setBusy] = useState(false)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const loadFiles = useCallback(() => {
-    const params: Record<string, unknown> = { limit: 200 }
+    const params: Record<string, unknown> = { limit: 500 }
     if (folder !== 'all') params.folder = folder
     if (search) params.search = search
     if (codec !== 'all') params.codec = codec
@@ -50,7 +69,6 @@ export function Media() {
 
   useEffect(() => { loadFiles() }, [loadFiles])
 
-  // Poll scan status
   useEffect(() => {
     if (!scanning) return
     const id = setInterval(async () => {
@@ -75,8 +93,42 @@ export function Media() {
     try { await api.jobs.create(fileId, action) } finally { setBusy(false) }
   }
 
-  // Client-side filter by action
   const displayed = actionFilter === 'all' ? files : files.filter(f => f.suggested_action === actionFilter)
+
+  // Determine if we should group: only for series/anime (or 'all' when files belong to groupable folders)
+  const shouldGroup = folder === 'series' || folder === 'anime' ||
+    (folder === 'all' && displayed.some(f => GROUPABLE.has(f.folder)))
+
+  const { groups, ungrouped } = useMemo(() => {
+    if (!shouldGroup) return { groups: [] as FolderGroup[], ungrouped: displayed }
+
+    const groupMap = new Map<string, MediaFileRecord[]>()
+    const flat: MediaFileRecord[] = []
+
+    for (const f of displayed) {
+      if (GROUPABLE.has(f.folder)) {
+        const seriesName = getSeriesFolder(f.path)
+        if (seriesName) {
+          if (!groupMap.has(seriesName)) groupMap.set(seriesName, [])
+          groupMap.get(seriesName)!.push(f)
+          continue
+        }
+      }
+      flat.push(f)
+    }
+
+    const groups: FolderGroup[] = [...groupMap.entries()]
+      .map(([name, files]) => ({
+        name,
+        files: files.sort((a, b) => a.filename.localeCompare(b.filename)),
+        totalSize: files.reduce((s, f) => s + f.size_bytes, 0),
+        codecs: new Set(files.map(f => f.codec).filter(Boolean) as string[]),
+        actions: new Set(files.map(f => f.suggested_action).filter(Boolean) as string[]),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    return { groups, ungrouped: flat }
+  }, [displayed, shouldGroup])
 
   function toggleSelect(id: number) {
     setSelected(prev => {
@@ -86,59 +138,101 @@ export function Media() {
     })
   }
 
+  function toggleGroup(name: string) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name); else next.add(name)
+      return next
+    })
+  }
+
+  function selectGroup(group: FolderGroup) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      const allSelected = group.files.every(f => next.has(f.id))
+      if (allSelected) {
+        group.files.forEach(f => next.delete(f.id))
+      } else {
+        group.files.forEach(f => next.add(f.id))
+      }
+      return next
+    })
+  }
+
+  function renderFileRow(f: MediaFileRecord, indent = false) {
+    return (
+      <tr key={f.id}
+          onClick={() => setDrawerFile(f)}
+          className={`border-b border-[var(--color-border)] cursor-pointer transition-colors
+            ${selected.has(f.id) ? 'bg-[var(--color-accent-dim)]' : 'hover:bg-[var(--color-elevated)]'}`}>
+        <td className="w-8 px-4 py-2.5" onClick={e => { e.stopPropagation(); toggleSelect(f.id) }}>
+          <input type="checkbox" checked={selected.has(f.id)} readOnly className="accent-[var(--color-accent)] pointer-events-none" />
+        </td>
+        <td className={`table-cell text-[var(--color-text-primary)] truncate max-w-0 ${indent ? 'pl-10' : ''}`}>{f.filename}</td>
+        <td className="table-cell-mono hidden sm:table-cell">{f.codec ?? '?'}</td>
+        <td className="table-cell-mono hidden md:table-cell">{f.resolution ?? '?'}</td>
+        <td className="table-cell-mono text-right hidden md:table-cell">{fmt(f.size_bytes)}</td>
+        <td className="table-cell-mono text-right hidden lg:table-cell">{duration(f.duration)}</td>
+        <td className="table-cell hidden sm:table-cell">
+          {f.suggested_action && f.suggested_action !== 'skip' ? (
+            <span className={`font-display text-[11px] px-2 py-0.5 ${actionColors[f.suggested_action] ?? ''}`}>
+              {f.suggested_action}
+            </span>
+          ) : (
+            <span className="font-display text-[11px] text-[var(--color-text-muted)]">—</span>
+          )}
+        </td>
+      </tr>
+    )
+  }
+
+  function getGroupAction(group: FolderGroup): string | null {
+    const meaningful = [...group.actions].filter(a => a !== 'skip')
+    if (meaningful.length === 1) return meaningful[0]
+    if (meaningful.length > 1) return 'mixed'
+    return null
+  }
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] shrink-0 bg-[var(--color-surface)] flex-wrap">
-        {/* Folder filters */}
+      <div className="toolbar">
         <div className="flex gap-1">
           {FOLDERS.map(f => (
-            <button key={f} onClick={() => { setFolder(f); setSelected(new Set()) }}
-                    className={`mono text-[10px] tracking-widest px-2.5 py-1.5 rounded-full border transition-colors
-                      ${folder === f
-                        ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-dim)]'
-                        : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'}`}>
+            <button key={f} onClick={() => { setFolder(f); setSelected(new Set()); setExpanded(new Set()) }}
+                    className={`pill ${folder === f ? 'pill-active' : ''}`}>
               {f}
             </button>
           ))}
         </div>
 
-        <div className="w-px h-5 bg-[var(--color-border)]" />
+        <div className="w-px h-4 bg-[var(--color-border)]" />
 
-        {/* Codec filter */}
         <div className="flex gap-1">
           {CODECS.map(c => (
             <button key={c} onClick={() => setCodec(c)}
-                    className={`mono text-[10px] tracking-widest px-2 py-1.5 rounded-full border transition-colors
-                      ${codec === c
-                        ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-dim)]'
-                        : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'}`}>
+                    className={`pill ${codec === c ? 'pill-active' : ''}`}>
               {c}
             </button>
           ))}
         </div>
 
-        <div className="w-px h-5 bg-[var(--color-border)]" />
+        <div className="w-px h-4 bg-[var(--color-border)]" />
 
-        {/* Action filter */}
         <div className="flex gap-1">
           {ACTIONS.map(a => (
             <button key={a} onClick={() => setActionFilter(a)}
-                    className={`mono text-[10px] tracking-widest px-2 py-1.5 rounded-full border transition-colors
-                      ${actionFilter === a
-                        ? 'border-[var(--color-accent)] text-[var(--color-accent)] bg-[var(--color-accent-dim)]'
-                        : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'}`}>
+                    className={`pill ${actionFilter === a ? 'pill-active' : ''}`}>
               {a}
             </button>
           ))}
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-1.5 bg-[var(--color-void)] border border-[var(--color-border)] rounded-full px-3 ml-auto">
+        <div className="flex items-center gap-1.5 bg-[var(--color-void)] border border-[var(--color-border)] px-3 ml-auto">
           <Search className="w-3 h-3 text-[var(--color-text-muted)] shrink-0" />
           <input value={search} onChange={e => setSearch(e.target.value)}
                  placeholder="search..."
-                 className="bg-transparent text-xs text-[var(--color-text-primary)] py-1.5 outline-none placeholder:text-[var(--color-text-muted)] w-32" />
+                 className="bg-transparent text-[12px] text-[var(--color-text-primary)] py-1.5 outline-none placeholder:text-[var(--color-text-muted)] w-28" />
           {search && (
             <button onClick={() => setSearch('')} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
               <X className="w-3 h-3" />
@@ -146,34 +240,29 @@ export function Media() {
           )}
         </div>
 
-        {/* Scan button */}
         <button onClick={handleScan} disabled={scanning}
-                className="flex items-center gap-1.5 mono text-[10px] tracking-widest px-3 py-1.5 rounded-full border
-                           border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
-                           hover:border-[var(--color-accent)] disabled:opacity-40 transition-colors">
+                className={`pill flex items-center gap-1.5 ${scanning ? 'pill-active' : ''}`}>
           <ScanLine className={`w-3 h-3 ${scanning ? 'animate-spin' : ''}`} />
           {scanning ? `${scanStatus?.scanned ?? 0}/${scanStatus?.total ?? '?'}` : 'Scan'}
         </button>
 
-        {/* Count */}
-        <span className="mono text-[10px] text-[var(--color-text-muted)]">{total} files</span>
+        <span className="label">{total} files</span>
       </div>
 
       {/* Bulk bar */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 px-5 py-2 border-b border-[var(--color-border)] bg-[var(--color-accent-dim)] shrink-0">
-          <span className="mono text-[10px] text-[var(--color-accent)]">{selected.size} selected</span>
+        <div className="flex items-center gap-3 px-6 py-2 border-b border-[var(--color-border)] bg-[var(--color-accent-dim)] shrink-0">
+          <span className="font-display text-[11px] text-[var(--color-accent)]">{selected.size} selected</span>
           {(['reencode', 'remux', 'downscale'] as const).map(action => (
             <button key={action} onClick={async () => {
               setBusy(true)
               try { await Promise.allSettled(Array.from(selected).map(id => api.jobs.create(id, action))) }
               finally { setBusy(false); setSelected(new Set()) }
-            }} disabled={busy}
-                    className="mono text-[10px] px-2.5 py-1 rounded border border-[var(--color-border)] text-[var(--color-accent)] hover:bg-[var(--color-accent-dim)] disabled:opacity-40 transition-colors">
+            }} disabled={busy} className="btn btn-accent text-[10px] py-1 px-2.5">
               {action}
             </button>
           ))}
-          <button onClick={() => setSelected(new Set())} className="mono text-[10px] text-[var(--color-text-muted)] ml-auto">Clear</button>
+          <button onClick={() => setSelected(new Set())} className="font-display text-[11px] text-[var(--color-text-muted)] ml-auto">Clear</button>
         </div>
       )}
 
@@ -182,7 +271,7 @@ export function Media() {
         <table className="w-full">
           <thead className="sticky top-0 z-10">
             <tr className="bg-[var(--color-void)] border-b border-[var(--color-border)]">
-              <th className="w-8 px-3 py-2">
+              <th className="w-8 px-4 py-2">
                 <input type="checkbox"
                        checked={selected.size === displayed.length && displayed.length > 0}
                        onChange={() => {
@@ -191,43 +280,69 @@ export function Media() {
                        }}
                        className="accent-[var(--color-accent)]" />
               </th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-left px-3 py-2">FILENAME</th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-left px-3 py-2 w-16 hidden sm:table-cell">CODEC</th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-left px-3 py-2 w-20 hidden md:table-cell">RES</th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-right px-3 py-2 w-16 hidden md:table-cell">SIZE</th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-right px-3 py-2 w-16 hidden lg:table-cell">DUR</th>
-              <th className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider text-left px-3 py-2 w-20 hidden sm:table-cell">ACTION</th>
+              <th className="table-header">FILENAME</th>
+              <th className="table-header w-16 hidden sm:table-cell">CODEC</th>
+              <th className="table-header w-20 hidden md:table-cell">RES</th>
+              <th className="table-header text-right w-16 hidden md:table-cell">SIZE</th>
+              <th className="table-header text-right w-16 hidden lg:table-cell">DUR</th>
+              <th className="table-header w-20 hidden sm:table-cell">ACTION</th>
             </tr>
           </thead>
           <tbody>
-            {displayed.map(f => (
-              <tr key={f.id}
-                  onClick={() => setDrawerFile(f)}
-                  className={`border-b border-[var(--color-border)] cursor-pointer transition-colors
-                    ${selected.has(f.id) ? 'bg-[var(--color-accent-dim)]' : 'hover:bg-[var(--color-elevated)]'}`}>
-                <td className="w-8 px-3 py-2" onClick={e => { e.stopPropagation(); toggleSelect(f.id) }}>
-                  <input type="checkbox" checked={selected.has(f.id)} readOnly className="accent-[var(--color-accent)] pointer-events-none" />
-                </td>
-                <td className="px-3 py-2 text-xs text-[var(--color-text-primary)] truncate max-w-0">{f.filename}</td>
-                <td className="px-3 py-2 mono text-[10px] text-[var(--color-text-muted)] hidden sm:table-cell">{f.codec ?? '?'}</td>
-                <td className="px-3 py-2 mono text-[10px] text-[var(--color-text-muted)] hidden md:table-cell">{f.resolution ?? '?'}</td>
-                <td className="px-3 py-2 mono text-[10px] text-[var(--color-text-muted)] text-right hidden md:table-cell">{fmt(f.size_bytes)}</td>
-                <td className="px-3 py-2 mono text-[10px] text-[var(--color-text-muted)] text-right hidden lg:table-cell">{duration(f.duration)}</td>
-                <td className="px-3 py-2 hidden sm:table-cell">
-                  {f.suggested_action && f.suggested_action !== 'skip' ? (
-                    <span className={`mono text-[10px] px-2 py-0.5 rounded ${actionColors[f.suggested_action] ?? ''}`}>
-                      {f.suggested_action}
-                    </span>
-                  ) : (
-                    <span className="mono text-[10px] text-[var(--color-text-muted)]">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {/* Grouped folders */}
+            {groups.map(group => {
+              const isOpen = expanded.has(group.name)
+              const allSelected = group.files.every(f => selected.has(f.id))
+              const someSelected = !allSelected && group.files.some(f => selected.has(f.id))
+              const groupAction = getGroupAction(group)
+
+              return (
+                <>{/* Group header row */}
+                  <tr key={`g-${group.name}`}
+                      className="border-b border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-elevated)] cursor-pointer transition-colors">
+                    <td className="w-8 px-4 py-2.5" onClick={e => { e.stopPropagation(); selectGroup(group) }}>
+                      <input type="checkbox" checked={allSelected} ref={el => { if (el) el.indeterminate = someSelected }}
+                             readOnly className="accent-[var(--color-accent)] pointer-events-none" />
+                    </td>
+                    <td className="table-cell" onClick={() => toggleGroup(group.name)}>
+                      <div className="flex items-center gap-2">
+                        <ChevronRight className={`w-3.5 h-3.5 text-[var(--color-text-muted)] transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                        <Folder className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                        <span className="text-[var(--color-text-primary)] font-medium">{group.name}</span>
+                        <span className="font-display text-[11px] text-[var(--color-text-muted)]">{group.files.length} files</span>
+                      </div>
+                    </td>
+                    <td className="table-cell-mono hidden sm:table-cell" onClick={() => toggleGroup(group.name)}>
+                      {[...group.codecs].join(', ') || '?'}
+                    </td>
+                    <td className="table-cell-mono hidden md:table-cell" onClick={() => toggleGroup(group.name)}>—</td>
+                    <td className="table-cell-mono text-right hidden md:table-cell" onClick={() => toggleGroup(group.name)}>
+                      {fmt(group.totalSize)}
+                    </td>
+                    <td className="table-cell-mono text-right hidden lg:table-cell" onClick={() => toggleGroup(group.name)}>—</td>
+                    <td className="table-cell hidden sm:table-cell" onClick={() => toggleGroup(group.name)}>
+                      {groupAction && groupAction !== 'skip' ? (
+                        <span className={`font-display text-[11px] px-2 py-0.5 ${groupAction === 'mixed' ? 'text-[var(--color-warn)]' : (actionColors[groupAction] ?? '')}`}>
+                          {groupAction}
+                        </span>
+                      ) : (
+                        <span className="font-display text-[11px] text-[var(--color-text-muted)]">—</span>
+                      )}
+                    </td>
+                  </tr>
+                  {/* Expanded children */}
+                  {isOpen && group.files.map(f => renderFileRow(f, true))}
+                </>
+              )
+            })}
+
+            {/* Ungrouped files (movies, downloads, or non-groupable) */}
+            {ungrouped.map(f => renderFileRow(f))}
+
             {displayed.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-12 text-center">
-                  <span className="mono text-xs text-[var(--color-text-muted)]">
+                <td colSpan={7} className="py-16 text-center">
+                  <span className="font-display text-[12px] text-[var(--color-text-muted)]">
                     {scanning ? `Scanning... ${scanStatus?.scanned ?? 0}/${scanStatus?.total ?? '?'}` :
                      total === 0 ? 'No files — click Scan to populate' : 'No matches'}
                   </span>
@@ -241,10 +356,10 @@ export function Media() {
       {/* Detail drawer */}
       <Drawer open={!!drawerFile} onClose={() => setDrawerFile(null)} title="FILE DETAILS">
         {drawerFile && (
-          <div className="p-5 space-y-5">
-            <h3 className="text-sm text-[var(--color-text-primary)] break-all leading-relaxed">{drawerFile.filename}</h3>
+          <div className="p-6 space-y-6">
+            <h3 className="text-[13px] text-[var(--color-text-primary)] break-all leading-relaxed">{drawerFile.filename}</h3>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {([
                 ['Codec', drawerFile.codec ?? '—'],
                 ['Resolution', drawerFile.resolution ?? '—'],
@@ -254,35 +369,31 @@ export function Media() {
                 ['Action', drawerFile.suggested_action ?? '—'],
               ] as [string, string][]).map(([k, v]) => (
                 <div key={k}>
-                  <div className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider mb-0.5">{k.toUpperCase()}</div>
-                  <div className={`text-xs text-[var(--color-text-primary)] ${k === 'Action' ? (actionColors[v] ?? '') : ''}`}>{v}</div>
+                  <div className="label mb-1">{k.toUpperCase()}</div>
+                  <div className={`text-[13px] text-[var(--color-text-primary)] ${k === 'Action' ? (actionColors[v] ?? '') : ''}`}>{v}</div>
                 </div>
               ))}
             </div>
 
             <div>
-              <div className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider mb-1">PATH</div>
-              <div className="text-[10px] text-[var(--color-text-primary)] break-all bg-[var(--color-void)] rounded-lg p-3 border border-[var(--color-border)]">
+              <div className="label mb-1.5">PATH</div>
+              <div className="text-[11px] text-[var(--color-text-primary)] break-all bg-[var(--color-void)] p-3 border border-[var(--color-border)]">
                 {drawerFile.path}
               </div>
             </div>
 
             <div>
-              <div className="mono text-[9px] text-[var(--color-text-muted)] tracking-wider mb-2">QUEUE JOB</div>
+              <div className="label mb-2">QUEUE JOB</div>
               <div className="flex gap-2">
                 {(['reencode', 'remux', 'downscale'] as const).map(action => (
                   <button key={action} disabled={busy} onClick={() => queueJob(drawerFile.id, action)}
-                          className="flex-1 px-3 py-2.5 text-xs rounded-lg border border-[var(--color-border)]
-                                     text-[var(--color-text-muted)] hover:text-[var(--color-accent)]
-                                     hover:border-[var(--color-accent)] disabled:opacity-40 transition-colors">
+                          className="btn flex-1">
                     {action}
                   </button>
                 ))}
               </div>
               <button disabled={busy} onClick={() => queueJob(drawerFile.id, 'delete')}
-                      className="w-full mt-2 px-3 py-2.5 text-xs rounded-lg border border-[var(--color-down)]/30
-                                 text-[var(--color-down)] hover:bg-[rgba(239,68,68,0.08)]
-                                 disabled:opacity-40 transition-colors">
+                      className="btn btn-danger w-full mt-2">
                 delete original
               </button>
             </div>

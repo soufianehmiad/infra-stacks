@@ -9,9 +9,10 @@ import { Home } from './sections/Home'
 import { Services } from './sections/Services'
 import { Jobs } from './sections/Jobs'
 import { Media } from './sections/Media'
+import { Kubernetes } from './sections/Kubernetes'
 import { Tunnels } from './sections/Tunnels'
 
-const SECTIONS = { home: Home, services: Services, jobs: Jobs, media: Media, tunnels: Tunnels }
+const SECTIONS = { home: Home, services: Services, kubernetes: Kubernetes, jobs: Jobs, media: Media, tunnels: Tunnels }
 
 export default function App() {
   const { authenticated, checking, check } = useAuth()

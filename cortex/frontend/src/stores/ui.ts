@@ -1,9 +1,9 @@
 // cortex/frontend/src/stores/ui.ts
 import { create } from 'zustand'
 
-export type Section = 'home' | 'services' | 'jobs' | 'media' | 'tunnels'
+export type Section = 'home' | 'services' | 'kubernetes' | 'jobs' | 'media' | 'tunnels'
 
-const VALID_SECTIONS: Section[] = ['home', 'services', 'jobs', 'media', 'tunnels']
+const VALID_SECTIONS: Section[] = ['home', 'services', 'kubernetes', 'jobs', 'media', 'tunnels']
 
 function readHash(): Section {
   const h = window.location.hash.replace('#', '')

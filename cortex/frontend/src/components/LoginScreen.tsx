@@ -30,7 +30,7 @@ function TerminalBoot() {
   }, [])
 
   return (
-    <div className="mono text-[11px] text-[var(--color-accent)] opacity-60 space-y-1">
+    <div className="font-display text-[11px] text-[var(--color-accent)] opacity-50 space-y-1.5">
       {lines.map((line, i) => (
         <div key={i} className={i === lines.length - 1 ? 'animate-pulse' : ''}>{line}</div>
       ))}
@@ -62,59 +62,54 @@ export function LoginScreen() {
 
   return (
     <div className="flex h-screen w-screen bg-[var(--color-void)]">
-      {/* Left panel — art + terminal */}
+      {/* Left panel */}
       <div className="hidden md:flex flex-col flex-1 relative overflow-hidden border-r border-[var(--color-border)]">
-        {/* Background GIF */}
         <img
           src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnV6NnR6dWJrOHRlMmd3c3Fkd295YW51ajJ0N2d2eXl2OHdubTRqbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6H6/giphy.gif"
           alt=""
           className="absolute inset-0 w-full h-full object-cover opacity-[0.07]"
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-void)] via-transparent to-[var(--color-void)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-void)] via-transparent to-[var(--color-void)]" />
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full p-10">
           <div>
-            <div className="mono text-[var(--color-accent)] text-2xl tracking-[0.3em] font-semibold mb-2"
+            <div className="font-display text-[var(--color-accent)] text-2xl tracking-[0.3em] font-semibold mb-2"
                  style={{ textShadow: '0 0 20px rgba(34, 197, 94, 0.5)' }}>
               CORTEX
             </div>
-            <div className="mono text-[11px] text-[var(--color-text-muted)] tracking-[0.15em]">
+            <div className="font-display text-[11px] text-[var(--color-text-muted)] tracking-[0.15em]">
               INFRASTRUCTURE CONTROL PLANE
             </div>
           </div>
 
           <TerminalBoot />
 
-          <div className="mono text-[10px] text-[var(--color-text-muted)] opacity-40 tracking-wider">
+          <div className="font-display text-[10px] text-[var(--color-text-muted)] opacity-35 tracking-wider">
             v2.0 // SECURE GATEWAY
           </div>
         </div>
       </div>
 
-      {/* Right panel — login form */}
+      {/* Right panel */}
       <div className="flex items-center justify-center w-full md:w-[420px] md:min-w-[420px] shrink-0 p-8">
         <div className="w-full max-w-[320px]">
           {/* Mobile logo */}
           <div className="md:hidden mb-10">
-            <div className="mono text-[var(--color-accent)] text-lg tracking-[0.3em] font-semibold"
+            <div className="font-display text-[var(--color-accent)] text-lg tracking-[0.3em] font-semibold"
                  style={{ textShadow: '0 0 20px rgba(34, 197, 94, 0.5)' }}>
               CORTEX
             </div>
-            <div className="mono text-[10px] text-[var(--color-text-muted)] tracking-[0.15em]">
+            <div className="font-display text-[10px] text-[var(--color-text-muted)] tracking-[0.15em]">
               INFRASTRUCTURE CONTROL PLANE
             </div>
           </div>
 
-          <div className="mono text-[10px] text-[var(--color-text-muted)] tracking-[0.2em] mb-6 uppercase">
-            // authenticate
-          </div>
+          <div className="label mb-6">// AUTHENTICATE</div>
 
-          <form onSubmit={submit} action="/api/auth/login" method="POST" className="flex flex-col gap-3">
+          <form onSubmit={submit} action="/api/auth/login" method="POST" className="flex flex-col gap-4">
             <div>
-              <label htmlFor="username" className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">USER</label>
+              <label htmlFor="username" className="label block mb-2">USER</label>
               <input
                 ref={inputRef}
                 id="username"
@@ -124,13 +119,11 @@ export function LoginScreen() {
                 placeholder="root"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                className="w-full mono text-sm bg-[var(--color-void)] border border-[var(--color-border)] text-[var(--color-text-primary)]
-                           px-3 py-2.5 outline-none focus:border-[var(--color-accent)] transition-colors
-                           placeholder:text-[var(--color-text-muted)] placeholder:opacity-30"
+                className="input"
               />
             </div>
             <div>
-              <label htmlFor="password" className="mono text-[9px] text-[var(--color-text-muted)] tracking-[0.15em] block mb-1.5">PASS</label>
+              <label htmlFor="password" className="label block mb-2">PASS</label>
               <input
                 id="password"
                 type="password"
@@ -139,14 +132,12 @@ export function LoginScreen() {
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full mono text-sm bg-[var(--color-void)] border border-[var(--color-border)] text-[var(--color-text-primary)]
-                           px-3 py-2.5 outline-none focus:border-[var(--color-accent)] transition-colors
-                           placeholder:text-[var(--color-text-muted)] placeholder:opacity-30"
+                className="input"
               />
             </div>
 
             {error && (
-              <div className="mono text-[11px] text-[var(--color-down)] tracking-wider flex items-center gap-2">
+              <div className="font-display text-[11px] text-[var(--color-down)] tracking-wider flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-[var(--color-down)] inline-block" />
                 {error}
               </div>
@@ -155,15 +146,15 @@ export function LoginScreen() {
             <button
               type="submit"
               disabled={busy || !username || !password}
-              className="mono text-[11px] tracking-[0.25em] py-3 mt-2 border border-[var(--color-accent)] text-[var(--color-accent)]
-                         bg-[var(--color-accent-dim)] font-semibold disabled:opacity-30 disabled:cursor-default cursor-pointer
+              className="font-display text-[11px] tracking-[0.25em] py-3 mt-2 border border-[var(--color-accent)] text-[var(--color-accent)]
+                         bg-[var(--color-accent-dim)] font-semibold disabled:opacity-25 disabled:cursor-default cursor-pointer
                          hover:bg-[var(--color-accent)] hover:text-[var(--color-void)] transition-all"
             >
               {busy ? '> VERIFYING...' : '> LOGIN'}
             </button>
           </form>
 
-          <div className="mono text-[9px] text-[var(--color-text-muted)] opacity-30 mt-8 tracking-wider">
+          <div className="font-display text-[9px] text-[var(--color-text-muted)] opacity-25 mt-8 tracking-wider">
             ENCRYPTED SESSION // AES-256
           </div>
         </div>

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.session import engine
 from app.db.models import Base
-from app.api.routes import auth, services, tunnels, ws, media, jobs, storage, proxmox
+from app.api.routes import auth, services, tunnels, ws, media, jobs, storage, proxmox, kubernetes
 from app.services.docker_discovery import discover_services
 from app.services.docker_events import start_event_watchers
 from app.core.redis import get_redis
@@ -43,6 +43,7 @@ app.include_router(media.router, prefix="/api")
 app.include_router(jobs.router, prefix="/api")
 app.include_router(storage.router, prefix="/api")
 app.include_router(proxmox.router, prefix="/api")
+app.include_router(kubernetes.router, prefix="/api")
 
 
 @app.get("/api/health")

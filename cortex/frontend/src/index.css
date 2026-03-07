@@ -1,42 +1,55 @@
-/* cortex/frontend/src/index.css — TERMINAL theme */
+/* cortex/frontend/src/index.css — TERMINAL design system */
 @import "tailwindcss";
 
 @theme {
   --color-void:         #0a0e14;
   --color-surface:      #111820;
   --color-elevated:     #1a2332;
-  --color-border:       rgba(34, 197, 94, 0.15);
+  --color-border:       rgba(34, 197, 94, 0.12);
+  --color-border-strong: rgba(34, 197, 94, 0.25);
   --color-accent:       #22c55e;
-  --color-accent-dim:   rgba(34, 197, 94, 0.08);
+  --color-accent-dim:   rgba(34, 197, 94, 0.07);
   --color-text-primary: #d4e0d4;
-  --color-text-muted:   #5a7a6a;
+  --color-text-secondary: #8fa89a;
+  --color-text-muted:   #5e7e6e;
   --color-up:           #22c55e;
   --color-down:         #ef4444;
   --color-warn:         #f59e0b;
 
-  --font-ui:   'JetBrains Mono', monospace;
-  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'JetBrains Mono', monospace;
+  --font-display: 'Share Tech Mono', monospace;
 }
 
-/* Kill all rounded corners globally — sharp terminal aesthetic */
+/* ── Reset ── */
 *, *::before, *::after {
   border-radius: 0 !important;
 }
 
-/* Grid overlay */
+/* ── Global ── */
+body {
+  background: var(--color-void);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Grid overlay ── */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(34, 197, 94, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.025) 1px, transparent 1px);
   background-size: 24px 24px;
   pointer-events: none;
   z-index: 9999;
 }
 
-/* Scanline effect */
+/* ── Scanlines ── */
 body::after {
   content: '';
   position: fixed;
@@ -45,36 +58,62 @@ body::after {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    rgba(0, 0, 0, 0.02) 2px,
+    rgba(0, 0, 0, 0.02) 4px
   );
   pointer-events: none;
   z-index: 9998;
 }
 
-body {
-  background: var(--color-void);
-  color: var(--color-text-primary);
-  font-family: var(--font-ui);
-  overflow: hidden;
+/* ── Typography classes ── */
+
+/* Display font — page titles, hero numbers, logo */
+.font-display {
+  font-family: var(--font-display);
 }
 
-/* Tile */
+/* Label — section headers, column headers, tags */
+.label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.label-accent {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* ── Tile surface ── */
 .tile {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
 }
 
-/* Status dot — only element that stays round */
+/* ── Status dot ── */
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50% !important;
   flex-shrink: 0;
 }
-.dot-up    { background: var(--color-up);   box-shadow: 0 0 6px var(--color-up), 0 0 12px rgba(34, 197, 94, 0.3); }
-.dot-down  { background: var(--color-down); box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
-.dot-warn  { background: var(--color-warn); box-shadow: 0 0 4px rgba(245, 158, 11, 0.3); }
+.dot-up {
+  background: var(--color-up);
+  box-shadow: 0 0 6px var(--color-up), 0 0 12px rgba(34, 197, 94, 0.3);
+}
+.dot-down {
+  background: var(--color-down);
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.3);
+}
+.dot-warn {
+  background: var(--color-warn);
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.3);
+}
 
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 6px var(--color-up), 0 0 12px rgba(34, 197, 94, 0.3); }
@@ -82,43 +121,179 @@ body {
 }
 .dot-up { animation: pulse-glow 2.5s ease-in-out infinite; }
 
-/* Mono */
-.mono { font-family: var(--font-mono); }
-
-/* Glow card hover */
+/* ── Glow card ── */
 .glow-card {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 .glow-card:hover {
-  border-color: rgba(34, 197, 94, 0.4);
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.1), inset 0 0 16px rgba(34, 197, 94, 0.03);
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.06), inset 0 0 20px rgba(34, 197, 94, 0.02);
 }
 
-/* Fluid typography */
-:root {
-  font-size: clamp(14px, 0.85vw + 9px, 19px);
+/* ── Section page header ── */
+.page-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--color-text-primary);
+  letter-spacing: 0.15em;
+}
+.page-subtitle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
-/* Mobile: touch targets */
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-surface);
+  flex-wrap: wrap;
+}
+
+/* ── Filter pill ── */
+.pill {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.pill:hover {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
+}
+.pill-active {
+  border-color: var(--color-accent) !important;
+  color: var(--color-accent) !important;
+  background: var(--color-accent-dim) !important;
+}
+
+/* ── Table ── */
+.table-header {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-align: left;
+  padding: 8px 16px;
+}
+.table-cell {
+  padding: 10px 16px;
+  font-size: 13px;
+}
+.table-cell-mono {
+  padding: 10px 16px;
+  font-size: 11px;
+  font-family: var(--font-display);
+  color: var(--color-text-secondary);
+}
+
+/* ── Input ── */
+.input {
+  width: 100%;
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease;
+}
+.input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ── Button ── */
+.btn {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.btn-accent {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-dim);
+}
+.btn-accent:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+.btn-danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-down);
+}
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ── Progress bar ── */
+.progress-track {
+  height: 6px;
+  background: var(--color-void);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 0.5s ease;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+/* ── Mobile: touch targets ── */
 @media (max-width: 640px) {
   nav button, nav a {
     min-height: 44px;
   }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.2); }
-::-webkit-scrollbar-thumb:hover { background: rgba(34, 197, 94, 0.4); }
+::-webkit-scrollbar-thumb { background: rgba(34, 197, 94, 0.15); }
+::-webkit-scrollbar-thumb:hover { background: rgba(34, 197, 94, 0.3); }
 
-/* Focus visible */
+/* ── Focus ── */
 *:focus-visible {
   outline: 1px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* Service icons stay round */
+/* ── Service icons stay visible ── */
 img[alt][class*="object-contain"] {
-  border-radius: 4px !important;
+  border-radius: 2px !important;
 }
