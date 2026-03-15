@@ -1,0 +1,19 @@
+services:
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: cloudbeaver
+    restart: unless-stopped
+    ports:
+      - "5050:8978"
+    environment:
+      - CB_ADMIN_NAME=${CB_ADMIN_NAME}
+      - CB_ADMIN_PASSWORD=${CB_ADMIN_PASSWORD}
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+      - /etc/cloudbeaver/data-sources.json:/opt/cloudbeaver/workspace/GlobalConfiguration/.dbeaver/data-sources.json
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+
+volumes:
+  cloudbeaver_data:
+    name: cloudbeaver_data
