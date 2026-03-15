@@ -13,6 +13,7 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./servers.json:/pgadmin4/servers.json:ro
+      - /etc/pgadmin/pgpassfile:/pgadmin4/pgpassfile:ro
     labels:
       com.centurylinklabs.watchtower.enable: "false"
 
