@@ -5,9 +5,7 @@ services:
     restart: unless-stopped
     ports:
       - "5050:8978"
-    environment:
-      - CB_ADMIN_NAME=${CB_ADMIN_NAME}
-      - CB_ADMIN_PASSWORD=${CB_ADMIN_PASSWORD}
+
     volumes:
       - cloudbeaver_data:/opt/cloudbeaver/workspace
       - /etc/cloudbeaver/data-sources.json:/opt/cloudbeaver/workspace/GlobalConfiguration/.dbeaver/data-sources.json
