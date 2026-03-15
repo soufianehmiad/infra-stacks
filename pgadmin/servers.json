@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Homelab Postgres",
+      "Group": "Homelab",
+      "Host": "10.99.0.52",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/pgadmin4/pgpassfile"
+    }
+  }
+}
